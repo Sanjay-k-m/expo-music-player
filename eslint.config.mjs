@@ -1,46 +1,73 @@
-// eslint.config.mjs
-import typescriptEslintPlugin from '@typescript-eslint/eslint-plugin'; // Import plugin
-import { defineConfig } from 'eslint-define-config';
-import reactPlugin from 'eslint-plugin-react'; // Import React plugin
-import reactHooksPlugin from 'eslint-plugin-react-hooks'; // Import React Hooks plugin
+import { fixupConfigRules, fixupPluginRules } from "@eslint/compat";
+import typescriptEslint from "@typescript-eslint/eslint-plugin";
+import react from "eslint-plugin-react";
+import reactHooks from "eslint-plugin-react-hooks";
+import globals from "globals";
+import tsParser from "@typescript-eslint/parser";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import js from "@eslint/js";
+import { FlatCompat } from "@eslint/eslintrc";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const compat = new FlatCompat({
+    baseDirectory: __dirname,
+    recommendedConfig: js.configs.recommended,
+    allConfig: js.configs.all
+});
 
-export default defineConfig([
-  {
-    files: ['*.ts', '*.tsx'], // Glob to match TypeScript files
+export default [{
+    ignores: [
+        "**/node_modules/**/*",
+        "**/.expo/**/*",
+        "**/.next/**/*",
+        "**/__generated__/**/*",
+        "**/build/**/*",
+        "react-native-lab/react-native/**/*",
+        "docs/react-native-website/**/*",
+        "**/android/**/*",
+        "**/assets/**/*",
+        "**/bin/**/*",
+        "**/fastlane/**/*",
+        "**/ios/**/*",
+        "**/kotlin/providers/**/*",
+        "**/vendored/**/*",
+        "docs/public/static/**/*",
+    ],
+}, ...fixupConfigRules(compat.extends(
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:react/recommended",
+    "plugin:react-hooks/recommended",
+)), {
+    plugins: {
+        "@typescript-eslint": fixupPluginRules(typescriptEslint),
+        react: fixupPluginRules(react),
+        "react-hooks": fixupPluginRules(reactHooks),
+    },
+
     languageOptions: {
-      parser: '@typescript-eslint/parser', // Use TypeScript parser
-      parserOptions: {
-        ecmaFeatures: {
-          jsx: true, // Enable JSX support
+        globals: {
+            ...globals.node,
         },
-        ecmaVersion: 2021, // Use ECMAScript 2021 features
-        sourceType: 'module', // Use ES Modules
-      },
+
+        parser: tsParser,
+        ecmaVersion: 12,
+        sourceType: "module",
+
+        parserOptions: {
+            ecmaFeatures: {
+                jsx: true,
+            },
+        },
     },
-    plugins: {
-      '@typescript-eslint': typescriptEslintPlugin, // Define plugin as an object
-      react: reactPlugin, // Use the imported react plugin
-      'react-hooks': reactHooksPlugin, // Use the imported react-hooks plugin
-    },
+
     rules: {
-      '@typescript-eslint/no-unused-vars': 'warn', // Warn for unused variables
-      '@typescript-eslint/no-explicit-any': 'off', // Allow 'any' type (adjust as needed)
-      'react/react-in-jsx-scope': 'off', // React JSX scope not required in newer versions
-      'react/display-name': 'off', // Disable display name rule for React components
+        "import/order": "off",
+        "@typescript-eslint/no-explicit-any": "off",
+        "react/react-in-jsx-scope": "off",
+        "react/display-name": "off",
+        "@typescript-eslint/no-unused-vars": "warn",
     },
-  },
-  {
-    files: ['*.js'], // Example for JavaScript files
-    languageOptions: {
-      ecmaVersion: 2021,
-      sourceType: 'module',
-    },
-    plugins: {
-      react: ('eslint-plugin-react'), // Include React plugin for JavaScript
-    },
-    rules: {
-      'no-console': 'warn', // Example rule for JavaScript files
-    },
-  },
-]);
+}];
